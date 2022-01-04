@@ -337,6 +337,8 @@ class PostProcessor:
                     deleter=len(variable) -len(str(start_date))
                     if deleter>0:
                         variable=int(variable[deleter:])
+                    else:
+                        variable = int(variable)
                 else:
                     variable=A.replace(self.folder_name,"").replace("_","")
                     variable = int(re.sub('\D', '', variable))
@@ -423,8 +425,12 @@ class PostProcessor:
                         if "Electrolyzer - Unused Power [Electricity - W]" not in A:
                             if "CHP - ElectricityOutput [Electricity - W]" in A:
                                 variable= variable + A["CHP - ElectricityOutput [Electricity - W]"][i]
+                        else:
+                            if "CHP - ElectricityOutput [Electricity - W]" in A:
+                                variable_test= variable + A["CHP - ElectricityOutput [Electricity - W]"][i]
                         if "AdvancedBattery - AC Battery Power [Electricity - W]" in A:
-                            variable_test = variable - A["AdvancedBattery - AC Battery Power [Electricity - W]"][i]
+                            variable_test = variable_test - A["AdvancedBattery - AC Battery Power [Electricity - W]"][i]
+
 
                         if variable < 0:
                             sum_Electricity_From_Grid_without_battery= sum_Electricity_From_Grid_without_battery - variable
@@ -539,8 +545,17 @@ class PostProcessor:
 
                         cashflows_with_battery=[]
                         cashflows_with_battery_low = []
-                        cashflows_without_battery=[]
+                        cashflows_with_battery_high = []
+                        cashflows_with_battery.append(-cost_total_investment)
+                        cashflows_with_battery_low.append(-cost_total_investment)
+                        cashflows_with_battery_high.append(-cost_total_investment)
 
+                        cashflows_without_battery=[]
+                        cashflows_without_battery_low = []
+                        cashflows_without_battery_high = []
+                        cashflows_without_battery.append(0)
+                        cashflows_without_battery_low.append(0)
+                        cashflows_without_battery_high.append(0)
 
                         counter=0
                         while counter <= self.observation_period:
@@ -569,6 +584,14 @@ class PostProcessor:
                             income_delta_without_battery_average = (-electricity_prize_from_grid_wtihout_battery_average + sum_Electricity_Into_Grid_without_battery / 1000 * 0.25 * electricity_prize_into_grid)
                             income_delta_without_battery_high = (-electricity_prize_from_grid_wtihout_battery_high + sum_Electricity_Into_Grid_without_battery / 1000 * 0.25 * electricity_prize_into_grid)
 
+                            cashflows_with_battery.append(income_delta_average)
+                            cashflows_with_battery_low.append(income_delta_low)
+                            cashflows_with_battery_high.append(income_delta_high)
+
+                            cashflows_without_battery.append(income_delta_without_battery_average)
+                            cashflows_without_battery_low.append(income_delta_without_battery_low)
+                            cashflows_without_battery_high.append(income_delta_without_battery_high)
+
                             counter = counter + 1
 
 
@@ -578,24 +601,52 @@ class PostProcessor:
                         income_delta_without_battery = (0.25 / 1000) * (-sum_Electricity_From_Grid_without_battery * electricity_prize_from_grid_wtihout_battery + sum_Electricity_Into_Grid_without_battery * electricity_prize_into_grid)
 
                     ###Net presentvalue with battery
-                    net_present_value_with_battery=npf.npv(self.interest_rate, cashflows_with_battery).round(2)
-                    net_present_value_with_battery_low=npf.npv(self.interest_rate, cashflows_with_battery_low).round(2)
+                    if self.analyze_household == True:
+                        net_present_value_with_battery=npf.npv(self.interest_rate, cashflows_with_battery).round(2)
+                        net_present_value_with_battery_low=npf.npv(self.interest_rate, cashflows_with_battery_low).round(2)
 
-                    net_present_value_without_battery=npf.npv(self.interest_rate, cashflows_without_battery).round(2)
+                        net_present_value_without_battery=npf.npv(self.interest_rate, cashflows_without_battery).round(2)
 
-                    ###Delta of net present values
-                    delta_net_present_value= +net_present_value_with_battery - net_present_value_without_battery
-                    delta_net_present_value_low= +net_present_value_with_battery_low - net_present_value_without_battery
+                        ###Delta of net present values
+                        delta_net_present_value= +net_present_value_with_battery - net_present_value_without_battery
+                        delta_net_present_value_low= +net_present_value_with_battery_low - net_present_value_without_battery
 
-                    delta_utilisation_hours= utilisation_hours_with_battery - utilisation_hours_without_battery
-                    return_of_investment= (delta_net_present_value - cost_total_investment)/cost_total_investment
-                    return_of_investment_low= (delta_net_present_value_low - cost_total_investment_low)/cost_total_investment_low
+                        return_of_investment= (delta_net_present_value - cost_total_investment)/cost_total_investment
+                        return_of_investment_low= (delta_net_present_value_low - cost_total_investment_low)/cost_total_investment_low
 
 
-                    pay_back_duration= cost_total_investment/(-np.mean(cashflows_without_battery[1:])+np.mean(cashflows_with_battery[1:]))
-                    pay_back_duration_low= cost_total_investment_low/(-np.mean(cashflows_without_battery[1:])+np.mean(cashflows_with_battery_low[1:]))
+                        pay_back_duration= cost_total_investment/(-np.mean(cashflows_without_battery[1:])+np.mean(cashflows_with_battery[1:]))
+                        pay_back_duration_low= cost_total_investment_low/(-np.mean(cashflows_without_battery[1:])+np.mean(cashflows_with_battery_low[1:]))
+                        delta_net_present_value_high=0
+                        return_of_investment_high=0
+                        pay_back_duration_high=0
+
+                    if self.analyze_industry == True:
+                        net_present_value_with_battery=npf.npv(self.interest_rate, cashflows_with_battery).round(2)
+                        net_present_value_with_battery_low=npf.npv(self.interest_rate, cashflows_with_battery_low).round(2)
+                        net_present_value_with_battery_high=npf.npv(self.interest_rate, cashflows_with_battery_high).round(2)
+
+                        net_present_value_without_battery = npf.npv(self.interest_rate, cashflows_without_battery).round(2)
+                        net_present_value_without_battery_low = npf.npv(self.interest_rate,cashflows_without_battery_low).round(2)
+                        net_present_value_without_battery_high = npf.npv(self.interest_rate,cashflows_without_battery_high).round(2)
+
+                        delta_net_present_value= +net_present_value_with_battery - net_present_value_without_battery
+                        delta_net_present_value_low= +net_present_value_with_battery_low - net_present_value_without_battery_low
+                        delta_net_present_value_high= +net_present_value_with_battery_high - net_present_value_without_battery_high
+
+                        return_of_investment= (delta_net_present_value - cost_total_investment)/cost_total_investment
+                        return_of_investment_low= (delta_net_present_value_low - cost_total_investment)/cost_total_investment
+                        return_of_investment_high = (delta_net_present_value_high - cost_total_investment) / cost_total_investment
+
+                        pay_back_duration = cost_total_investment / (-np.mean(cashflows_without_battery[1:]) + np.mean(cashflows_with_battery[1:]))
+                        pay_back_duration_low = cost_total_investment / (
+                                    -np.mean(cashflows_without_battery_low[1:]) + np.mean(cashflows_with_battery_low[1:]))
+                        pay_back_duration_high = cost_total_investment / (
+                                    -np.mean(cashflows_without_battery_high[1:]) + np.mean(cashflows_with_battery_high[1:]))
 
                     full_cycles=((-sum_Produced_Elect_Battery+sum_Demand_Battery)*0.25/1000)/(2*bat_size)
+                    delta_utilisation_hours = utilisation_hours_with_battery - utilisation_hours_without_battery
+
                     if own_consumption > 1:
                         print("owncumption is bigger than one :" +str(own_consumption))
                         own_consumption=1
@@ -614,10 +665,13 @@ class PostProcessor:
                     newrow.append(full_cycles)
                     newrow.append(delta_net_present_value)
                     newrow.append(delta_net_present_value_low)
+                    newrow.append(delta_net_present_value_high)
                     newrow.append(return_of_investment) #autarky
                     newrow.append(return_of_investment_low)
+                    newrow.append(return_of_investment_high)
                     newrow.append(pay_back_duration)
                     newrow.append(pay_back_duration_low)
+                    newrow.append(pay_back_duration_high)
                     newrow.append(utilisation_hours_with_battery)
                     newrow.append(delta_utilisation_hours)
 
@@ -1135,13 +1189,18 @@ class PostProcessor:
                                              "FullCycles",
                                              "DeltaNetPresentValue",
                                              "DeltaNetPresentValueLow",
+                                             "DeltaNetPresentValueHigh",
                                              "ReturnOnInvestment",
                                              "ReturnOnInvestmentLow",
+                                             "ReturnOnInvestmentHigh",
                                              "PayBackDuration",
                                              "PayBackDurationLow",
+                                             "PayBackDurationHigh",
                                              "UtilisationHoursWithBattery",
                                              "DeltaUtilisationHours"
                                              ])
+
+
 
         #"NetPresentValue_high_Elect_price",
         #"NetPresentValue_low_Batteryprice",
@@ -1166,7 +1225,7 @@ class PostProcessor:
 my_Post_Processor=PostProcessor(folder_name="basic_household_implicit_salib_seasonal",
                                 json_file_name="cfg",
                                 pickle_file_name="data",
-                                start_date="20211226_003200",
+                                start_date="20211229_003200",
                                 end_date="20211229_163500",
                                 heat_map_precision_factor=41,
                                 simulation_number_to_be_analyzed=50000# can bes as well None, than it checks for all simulations in between start and end date
