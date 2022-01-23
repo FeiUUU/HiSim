@@ -118,13 +118,13 @@ def basic_household(my_sim,capacity=capacitiy,power=power):
                                         seconds_per_timestep=seconds_per_timestep)
     '''
     #Build Battery
-    #fparameter = np.load(globals.HISIMPATH["bat_parameter"])
-    #my_battery = advanced_battery.AdvancedBattery(my_simulation_parameters=my_sim_params,capacity=capacity)
+    fparameter = np.load(globals.HISIMPATH["bat_parameter"])
+    my_battery = advanced_battery.AdvancedBattery(my_simulation_parameters=my_sim_params,capacity=capacity)
 
 
 
     #Build Controller
-    my_controller = controller.Controller(strategy= "optimize_own_consumption",limit_to_shave=0)
+    my_controller = controller.Controller(strategy= "peak_shaving_from_grid",limit_to_shave=500)
     '''
         residual_power = CSVLoader(component_name="residual_power",
                                csv_filename="advanced_battery/Pr_ideal_1min.csv",
@@ -242,7 +242,7 @@ def basic_household(my_sim,capacity=capacitiy,power=power):
     my_photovoltaic_system.connect_input(my_photovoltaic_system.WindSpeed,
                                          my_weather.ComponentName,
                                          my_weather.WindSpeed)
-    '''
+
     my_battery.connect_input(my_battery.LoadingPowerInput,
                                my_controller.ComponentName,
                                my_controller.ElectricityToOrFromBatteryTarget)
@@ -250,7 +250,7 @@ def basic_household(my_sim,capacity=capacitiy,power=power):
     my_controller.connect_input(my_controller.ElectricityToOrFromBatteryReal,
                                my_battery.ComponentName,
                                my_battery.ACBatteryPower)
-    '''
+
 
     my_controller.connect_input(my_controller.ElectricityConsumptionBuilding,
                                csv_load_power_demand.ComponentName,
@@ -260,7 +260,7 @@ def basic_household(my_sim,capacity=capacitiy,power=power):
                                my_photovoltaic_system.ElectricityOutput)
 
     my_sim.add_component(my_photovoltaic_system)
-    #my_sim.add_component(my_battery)
+    my_sim.add_component(my_battery)
     my_sim.add_component(my_controller)
 
 

@@ -268,18 +268,28 @@ class Controller(cp.Component):
     def peak_shaving_from_grid(self,delta_demand:float,limit_to_shave: float,stsv: cp.SingleTimeStepValues):
         electricity_to_or_from_battery_target=0
         check_peak_shaving=0
+        #More Elect. Produced than needed
         if delta_demand > 0:
             electricity_to_or_from_battery_target = delta_demand
-        elif -delta_demand >  limit_to_shave:
+            #Battery charged for all amount of deltademand
+            if 0.95*delta_demand< stsv.get_input_value(self.electricity_to_or_from_battery_real) and 1.05 * delta_demand > stsv.get_input_value(self.electricity_to_or_from_battery_real):
+                electricity_to_or_from_battery_target = delta_demand + 0.7*limit_to_shave
+            elif stsv.get_input_value(self.electricity_to_or_from_battery_real) >= 1.05 * delta_demand:
+                electricity_to_or_from_battery_target = delta_demand + 0.7*limit_to_shave
+        # Less Elect. Produced than needed, Demand higher than Peak
+        elif -delta_demand >  1.01*limit_to_shave:
             check_peak_shaving=1
-            electricity_to_or_from_battery_target= delta_demand+limit_to_shave
-            if -delta_demand + limit_to_shave + stsv.get_input_value(
-                self.electricity_to_or_from_battery_real) > 0:
-                check_peak_shaving = -delta_demand + limit_to_shave + stsv.get_input_value(
-                self.electricity_to_or_from_battery_real)
+            electricity_to_or_from_battery_target= delta_demand+1.05*limit_to_shave
+
+
+        # Less Elect. Produced than needed, Demand smaller than Peak
+        elif -delta_demand < limit_to_shave and -delta_demand>0:
+            electricity_to_or_from_battery_target= -(-delta_demand -0.9 * limit_to_shave)
+
         electricity_to_or_from_grid = -delta_demand + stsv.get_input_value(
             self.electricity_to_or_from_battery_real)
-
+        if electricity_to_or_from_grid<-1029.9*0.9 and electricity_to_or_from_grid>-1029.9*1.1:
+            print("stop")
         stsv.set_output_value(self.electricity_to_or_from_grid, electricity_to_or_from_grid)
         stsv.set_output_value(self.electricity_to_or_from_battery_target, electricity_to_or_from_battery_target)
         stsv.set_output_value(self.check_peak_shaving, check_peak_shaving)
@@ -375,7 +385,7 @@ class Controller(cp.Component):
         # Production of Electricity positve sign
         # Consumption of Electricity negative sign
         delta_demand = stsv.get_input_value(self.electricity_output_pvs) - stsv.get_input_value(self.electricity_consumption_building) -stsv.get_input_value(self.electricity_demand_heat_pump)
-        if timestep==60*24*120+12*60:
+        if timestep==152:
             print(stsv.get_input_value(self.electricity_output_pvs))
         if self.strategy == "optimize_own_consumption":
             self.optimize_own_consumption(delta_demand=delta_demand,stsv=stsv)

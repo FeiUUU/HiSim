@@ -372,7 +372,7 @@ class CHP(Component):
             gas_demand_real_used=0
         else:
             if self.gas_type == "Hydrogen":
-                gas_demand_target= ((el_power/eff_el_real)+(th_power/eff_th_real ))/(PhysicsConfig.hydrogen_specific_fuel_value_per_kg*1000)
+                gas_demand_target= ((el_power/eff_el_real)+(th_power/eff_th_real ))/(PhysicsConfig.hydrogen_specific_fuel_value_per_kg)
                 if stsv.get_input_value(self.hydrogen_not_released)==0:
                     #Gas Demand can completly be charged from storage
                     gas_demand_real_used=gas_demand_target

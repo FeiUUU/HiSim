@@ -42,7 +42,7 @@ def main(path_to_module: str, function_in_module: str):
 
     # Perform postprocessing
     my_post_processor = pp.PostProcessor(resultsdir=my_sim.resultsdir)
-    #my_post_processor.run()
+    my_post_processor.run()
 
 if __name__ == "__main__":
     if len(sys.argv) < 3:
