@@ -112,7 +112,7 @@ class PostProcessor:
                  plot_all_houses=False,
                  plot_sfh=True,
                  plot_mfh=False,
-                 plot_strategy_all=False,
+                 plot_strategy_all=True,
                  plot_strategy_own_consumption=True,
                  plot_strategy_seasonal_storage=False,
                  plot_strategy_peak_shave_into_grid =False,
@@ -128,7 +128,7 @@ class PostProcessor:
                  plot_peak_shaving_generation_accurancy=False,
                  interest_rate=0.0542,
                  analyze_salib=True,
-                 analyze_lhs=False,
+                 analyze_lhs=True,
                  analyze_industry=False,
                  analyze_household=True,
                  provider_price="average",
@@ -708,11 +708,11 @@ class PostProcessor:
             while x < (num_rows - 1):
                 x = x + 1
                 if component in "plot_battery_and_pv":
-                    x_axis.append((target_matrix[x, 5] / 1000) / (float(key_performance_indicators[x,7])/1000))  # in kW/kW
-                    y_axis.append(target_matrix[x, 6] / (float(key_performance_indicators[x,7])/1000))  # in kWh/kw
+                    x_axis.append((target_matrix[x, 5] / 1000) / (float(key_performance_indicators[x,16])/1000))  # in kW/kW
+                    y_axis.append(target_matrix[x, 6] / (float(key_performance_indicators[x,16])/1000))  # in kWh/kw
                 elif component in "plot_net_present_value":
-                    x_axis.append((target_matrix[x, 5] / 1000) / (float(key_performance_indicators[x,7])/1000))  # in kW/kW
-                    y_axis.append(target_matrix[x, 6] / (float(key_performance_indicators[x,7])/1000))  # in kWh/kw
+                    x_axis.append((target_matrix[x, 5] / 1000) / (float(key_performance_indicators[x,16])/1000))  # in kW/kW
+                    y_axis.append(target_matrix[x, 6] / (float(key_performance_indicators[x,16])/1000))  # in kWh/kw
 
                 elif component in "plot_h2_storage_relative_demand":
                     if target_matrix[x, 13] == None or target_matrix[x, 13] == 0:
@@ -1121,7 +1121,7 @@ class PostProcessor:
                         if kpi == "OwnConsumption" or kpi== "Autarky":
                             divnorm = colors.TwoSlopeNorm(vmin=0, vcenter=0.5, vmax=1)
                         else:
-                            divnorm = colors.TwoSlopeNorm(vmin=-40, vcenter=0, vmax=40)
+                            divnorm = colors.TwoSlopeNorm(vmin=-10000, vcenter=0, vmax=10000)
                         cmap = ListedColormap(["darkred", "firebrick", "indianred", "lightcoral","coral", "lightsalmon","lightgreen","greenyellow","yellowgreen","limegreen","forestgreen","darkgreen"])
                         if component == "plot_net_present_value":
 
@@ -1206,8 +1206,7 @@ class PostProcessor:
 
     def run(self):
         #I am working with numpy array instead of dict, bec. can be made better to grafics.
-        '''
-        '''
+
         #Names are not consistent in Components, so hard to automize
         target_matrix= np.array(["Weather",
                                  "HouseType",
@@ -1262,16 +1261,16 @@ class PostProcessor:
 
 
 
-        #target_matrix=np.load("target_matrix_sorted_household_for_plot.npy",allow_pickle=True )
-        #key_performance_indicators=np.load("kpis_sorted_household_for_plot.npy",allow_pickle=True )
+        target_matrix=np.load("target_matrix_sorted_industry_forplot10.npy",allow_pickle=True )
+        key_performance_indicators=np.load("kpis_sorted_industry_forplot10.npy",allow_pickle=True )
         self.plot_heat_map(target_matrix,key_performance_indicators)
 
 
-my_Post_Processor=PostProcessor(folder_name="basic_household_implicit_salib_seasonal",
+my_Post_Processor=PostProcessor(folder_name="basic_household_implicit_salib_household",
                                 json_file_name="cfg",
                                 pickle_file_name="data",
-                                start_date="20220117_133200",
-                                end_date="20220118_233200",
+                                start_date="20220123_133200",
+                                end_date="20220123_231200",
                                 heat_map_precision_factor=26,
                                 simulation_number_to_be_analyzed=50000# can bes as well None, than it checks for all simulations in between start and end date
                                 )

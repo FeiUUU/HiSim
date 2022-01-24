@@ -39,10 +39,10 @@ def basic_household_explicit(my_sim):
 
     # Set simulation parameters
     year = 2021
-    seconds_per_timestep = 60
+    seconds_per_timestep = 900
 
     # Set weather
-    location = "Aachen"
+    location = "01Bremerhaven"
 
     # Set photovoltaic system
     time = 2019
@@ -84,7 +84,8 @@ def basic_household_explicit(my_sim):
     my_sim.add_component(my_occupancy)
 
     # Build Weather
-    my_weather = weather.Weather(location=location)
+    my_weather = weather.Weather(location=location,
+                                 my_simulation_parameters=my_sim_params)
     my_sim.add_component(my_weather)
 
     my_photovoltaic_system = pvs.PVSystem(time=time,
@@ -94,7 +95,7 @@ def basic_household_explicit(my_sim):
                                               module_name=module_name,
                                               integrateInverter=integrateInverter,
                                               inverter_name=inverter_name,
-                                              sim_params=my_sim_params)
+                                              my_simulation_parameters=my_sim_params)
     my_photovoltaic_system.connect_input(my_photovoltaic_system.TemperatureOutside,
                                          my_weather.ComponentName,
                                          my_weather.TemperatureOutside)
