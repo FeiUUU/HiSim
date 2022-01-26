@@ -9,7 +9,14 @@ from components.configuration import ElectrolyzerConfig
 import loadtypes as lt
 
 from components.configuration import PhysicsConfig
-
+__authors__ = "Frank Burkrad, Maximilian Hillen"
+__copyright__ = "Copyright 2021, the House Infrastructure Project"
+__credits__ = ["Noah Pflugradt"]
+__license__ = ""
+__version__ = ""
+__maintainer__ = "Maximilian Hillen"
+__email__ = "maximilian.hillen@rwth-aachen.de"
+__status__ = ""
 class HydrogenStorageConfig:
     # combination of
     min_capacity = 0                    # [kg_H2]

@@ -9,7 +9,21 @@ import pandas as pd
 import os
 import globals
 import math
+
+__authors__ = "Frank Burkrad, Maximilian Hillen,"
+__copyright__ = "Copyright 2021, the House Infrastructure Project"
+__credits__ = ["Noah Pflugradt"]
+__license__ = ""
+__version__ = ""
+__maintainer__ = "Maximilian Hillen"
+__email__ = "maximilian.hillen@rwth-aachen.de"
+__status__ = "development"
+
+
 class CHPConfigSimple:
+    """
+    CHP Config
+    """
     is_modulating = True
     P_el_min = 2_000        # [W]
     P_th_min = 3_000        # [W]
@@ -22,6 +36,7 @@ class CHPConfigSimple:
     eff_th_max = 0.55       # [-]
     temperature_max=80
     delta_T=10
+
 class CHPConfig:
 
     # system_name = "BlueGEN15"
@@ -73,7 +88,10 @@ class CHPState:
         else:
             raise Exception("Impossible CHPState.")
 class CHP(Component):
-
+    """
+    Simulate chp efficiency (cop) as well as electrical (p_el) &
+    thermal power (p_th), massflow (m_dot) and output temperature (t_out).
+    """
     # Inputs
     ControlSignal = "ControlSignal" # at which Procentage is the CHP modulating [0..1]
     MassflowInputTemperature = "MassflowInputTemperature"

@@ -9,13 +9,12 @@ import loadtypes as lt
 
 __authors__ = "Maximilian Hillen"
 __copyright__ = "Copyright 2021, the House Infrastructure Project"
-__credits__ = ["Tjarko Tjaden"]
-__license__ = "MIT"
-__version__ = "0.1"
-__maintainer__ = "Vitor Hugo Bellotto Zago"
-__email__ = "vitor.zago@rwth-aachen.de"
-__status__ = "development"
-
+__credits__ = ["Noah Pflugradt"]
+__license__ = ""
+__version__ = ""
+__maintainer__ = "Maximilian Hillen"
+__email__ = "maximilian.hillen@rwth-aachen.de"
+__status__ = ""
 
 class HeatStorageState:
     def __init__(self, T_sp_ww: float,T_sp_hw: float):
@@ -24,7 +23,10 @@ class HeatStorageState:
 
 
 class HeatStorage(Component):
-
+    """
+    In this class is WarmWater and HeatingWater Storage,
+    gets demand as Input and calculates new storage temperature
+    """
     # Inputs
     ThermalDemandHeatingWater="ThermalDemandHeatingWater" # Heating Water to regulate room Temperature
     ThermalDemandWarmWater="ThermalDemandHeating" # Warmwater for showering, washing etc...

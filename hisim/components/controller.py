@@ -7,11 +7,15 @@ import component as cp
 import loadtypes as lt
 
 
-# idead of the class. Save ControlSignal of Componentes in lasttimestep
-# on basis of ControlSignals of last timestept, rule ControlSignals of futre timesteps
+__authors__ = "Maximilian"
+__copyright__ = "Copyright 2021, the House Infrastructure Project"
+__credits__ = ["Noah Pflugradt"]
+__license__ = ""
+__version__ = ""
+__maintainer__ = "Maximilian Hillen"
+__email__ = "vitor.zago@rwth-aachen.de"
+__status__ = "development"
 
-# class ControllerState:
-#    def __init__(self):
 class ControllerState:
     def __init__(self, control_signal_gas_heater: float, control_signal_chp: float, control_signal_heat_pump: int,temperature_storage_target_ww_C: float,temperature_storage_target_hw_C: float,timestep_of_hysteresis_ww:int,timestep_of_hysteresis_hw:int):
         self.control_signal_gas_heater = control_signal_gas_heater
@@ -24,6 +28,16 @@ class ControllerState:
 
 
 class Controller(cp.Component):
+    """
+    Connects energysystemcomponents,
+    calculates Control Signals of Components,
+    rules workflow battery
+    4 strategies can be choosen:
+    "optimize_own_consumption"
+    "seasonal_storage"
+    "peak_shaving_into_grid"
+    "peak_shaving_from_grid"
+    """
     #Inputs
     ElectricityConsumptionBuilding="ElectricityConsumptionBuilding"
     StorageTemperatureHeatingWater = "StorageTemperatureHeatingWater"
@@ -185,6 +199,7 @@ class Controller(cp.Component):
 
     def i_doublecheck(self, timestep: int, stsv: cp.SingleTimeStepValues):
         pass
+
 
     def optimize_own_consumption(self, delta_demand: float, stsv: cp.SingleTimeStepValues):
 

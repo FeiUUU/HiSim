@@ -42,7 +42,7 @@ def basic_household_explicit(my_sim):
     seconds_per_timestep = 900
 
     # Set weather
-    location = "01Bremerhaven"
+    location = "02Rostock"
 
     # Set photovoltaic system
     time = 2019

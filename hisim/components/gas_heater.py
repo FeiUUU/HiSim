@@ -7,11 +7,14 @@ __copyright__ = "Copyright 2021, the House Infrastructure Project"
 __credits__ = ["Noah Pflugradt"]
 __license__ = ""
 __version__ = ""
-__maintainer__ = ""
-__email__ = ""
+__maintainer__ = "Maximilian Hillen"
+__email__ = "maximilian.hillen@rwth-aachen.de"
 __status__ = ""
 
 class GasHeaterConfig:
+    """
+    Gas Heater Config
+    """
     is_modulating = True
     P_th_min = 1_000                    # [W]
     P_th_max = 12_000                    # [W]
@@ -22,6 +25,9 @@ class GasHeaterConfig:
     temperature_max = 80                # [°C]
 
 class GasHeater(Component):
+    """
+    Gets Control Signal and calculates on base of it Massflow and Temperature of Massflow
+    """
     #Input
     ControlSignal = "ControlSignal" # at which Procentage is the GasHeater modulating [0..1]
     MassflowInputTemperature = "MassflowInputTemperature"
