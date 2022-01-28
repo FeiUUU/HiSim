@@ -10,11 +10,13 @@ from string import digits
 import re
 #plot stuff
 import matplotlib.pyplot as plt
+import matplotlib as mpl
 import matplotlib.pyplot as plt
 from matplotlib import cm
 from matplotlib.colors import ListedColormap, LinearSegmentedColormap
 from matplotlib.colors import BoundaryNorm
 from matplotlib.ticker import MaxNLocator
+from matplotlib.pyplot import figure
 import numpy_financial as npf
 import postprocessing.postprocessing as pp
 
@@ -112,7 +114,7 @@ class PostProcessor:
                  plot_all_houses=False,
                  plot_sfh=True,
                  plot_mfh=False,
-                 plot_strategy_all=True,
+                 plot_strategy_all=False,
                  plot_strategy_own_consumption=True,
                  plot_strategy_seasonal_storage=False,
                  plot_strategy_peak_shave_into_grid =False,
@@ -129,21 +131,22 @@ class PostProcessor:
                  interest_rate=0.0542,
                  analyze_salib=True,
                  analyze_lhs=True,
-                 analyze_industry=False,
-                 analyze_household=True,
+                 analyze_industry=True,
+                 analyze_household=False,
                  provider_price="average",
                  price_for_atypical_usage=False,
                  simulation_number_to_be_analyzed=None,
                  plot_strategy_industry=True,
                  plot_setup_heat_pump=True,
                  plot_setup_chp_gas_heater=True,
-                 plot_strategy_over_100MWh_and_peak_shaving_into_grid=True,
-                 plot_strategy_over_100MWh_and_self_consumption=True,
-                 plot_strategy_Quarry_and_self_consumption=True,
-                 plot_strategy_Metalworking_and_self_consumption=True,
-                 plot_strategy_school_and_self_consumption=True,
-                 plot_strategy_over_1000MWh_and_peak_shaving_from_grid_under_10=True,
-                 plot_strategy_under_100MWh_and_peak_shaving_from_grid_under_10=True,
+                 plot_peak_shaving_from_grid=False,
+                 plot_strategy_over_100MWh_and_peak_shaving_into_grid=False,
+                 plot_strategy_over_100MWh_and_self_consumption=False,
+                 plot_strategy_Quarry_and_self_consumption=False,
+                 plot_strategy_Metalworking_and_self_consumption=False,
+                 plot_strategy_school_and_self_consumption=False,
+                 plot_strategy_over_1000MWh_and_peak_shaving_from_grid_under_10=False,
+                 plot_strategy_under_100MWh_and_peak_shaving_from_grid_under_10=False,
 
                  plot_strategy_over_100MWh_and_peak_shaving_into_grid_under_10=False,
                  plot_strategy_over_100MWh_and_peak_shaving_into_grid_over_50=False,
@@ -171,6 +174,7 @@ class PostProcessor:
                               "plot_mfh": plot_mfh}
         self.flags_strategy= {"plot_strategy_all": plot_strategy_all,
                               "plot_strategy_own_consumption": plot_strategy_own_consumption,
+                              "plot_peak_shaving_from_grid":plot_peak_shaving_from_grid,
                               "plot_strategy_seasonal_storage": plot_strategy_seasonal_storage,
                               "plot_strategy_peak_shave_into_grid": plot_strategy_peak_shave_into_grid,
                               "plot_strategy_industry":plot_strategy_industry,
@@ -705,8 +709,10 @@ class PostProcessor:
         own_consumption = []
         autarky = []
         if self.analyze_industry == True:
+
             while x < (num_rows - 1):
                 x = x + 1
+                annual_demand = (float(key_performance_indicators[x, 16]) / 1000)
                 if component in "plot_battery_and_pv":
                     x_axis.append((target_matrix[x, 5] / 1000) / (float(key_performance_indicators[x,16])/1000))  # in kW/kW
                     y_axis.append(target_matrix[x, 6] / (float(key_performance_indicators[x,16])/1000))  # in kWh/kw
@@ -773,7 +779,7 @@ class PostProcessor:
         elif kpi == "NetPresentValue":
             key_to_look_at = key_performance_indicators[1::, 2]
         elif kpi == "DeltaNetPresentValue":
-            key_to_look_at = key_performance_indicators[1::, 9]
+            key_to_look_at = key_performance_indicators[1::, 3]
         elif kpi == "DeltaNetPresentValueLow":
             key_to_look_at = key_performance_indicators[1::, 4]
         elif kpi == "DeltaNetPresentValueHigh":
@@ -854,8 +860,18 @@ class PostProcessor:
                 if target_matrix[i,14] != "optimize_own_consumption":
                     C[i,0] = "delete"
             key_performance_indicators_new = np.delete(C, np.where(C == "delete")[0], 0)
+        elif y == "plot_peak_shaving_from_grid":
+            B =(target_matrix[np.any(target_matrix == "Weather", axis=1)])
+            A = (target_matrix[np.any(target_matrix == "peak_shaving_from_grid", axis=1)])
+            target_matrix_new=np.append(B,A,axis=0)
 
-
+            C = key_performance_indicators.copy()
+            i=0
+            while i < (len(target_matrix[:,14])-1):
+                i=i+1
+                if target_matrix[i,14] != "peak_shaving_from_grid":
+                    C[i,0] = "delete"
+            key_performance_indicators_new = np.delete(C, np.where(C == "delete")[0], 0)
 
 
 
@@ -924,6 +940,18 @@ class PostProcessor:
                     continue
 
         elif self.analyze_industry==True:
+
+            B =(target_matrix[np.any(target_matrix == "Weather", axis=1)])
+            A = (target_matrix[np.any(target_matrix == "peak_shaving_from_grid", axis=1)])
+            target_matrix_new=np.append(B,A,axis=0)
+
+            C = key_performance_indicators.copy()
+            i=0
+            while i < (len(target_matrix[:,14])-1):
+                i=i+1
+                if target_matrix[i,14] != "peak_shaving_from_grid":
+                    C[i,0] = "delete"
+            key_performance_indicators_new = np.delete(C, np.where(C == "delete")[0], 0)
             if y == "plot_strategy_Metalworking_and_self_consumption":
                 x = 0
                 target_matrix_new = target_matrix[0, :]
@@ -1049,17 +1077,17 @@ class PostProcessor:
                         continue
 
 
-        elif y=="plot_strategy_peak_shave_into_grid":
+            elif y=="plot_strategy_peak_shave_from_grid":
 
-            B =(target_matrix[np.any(target_matrix == "Weather", axis=1)])
-            A = (target_matrix[np.any(target_matrix == "peak_shaving_into_grid", axis=1)])
-            target_matrix_new=np.append(B,A,axis=0)
-            key_performance_indicators_new=key_performance_indicators.copy()
-            i=0
-            while i < (len(target_matrix[:,14])-1):
-                i=i+1
-                if target_matrix[i,14] != "peak_shaving_into_grid":
-                    key_performance_indicators_new[i,0] = "delete"
+                B =(target_matrix[np.any(target_matrix == "Weather", axis=1)])
+                A = (target_matrix[np.any(target_matrix == "peak_shaving_from_grid", axis=1)])
+                target_matrix_new=np.append(B,A,axis=0)
+                key_performance_indicators_new=key_performance_indicators.copy()
+                i=0
+                while i < (len(target_matrix[:,14])-1):
+                    i=i+1
+                    if target_matrix[i,14] != "peak_shaving_from_grid":
+                        key_performance_indicators_new[i,0] = "delete"
 
             key_performance_indicators_new = np.delete(key_performance_indicators_new, np.where(key_performance_indicators_new == "delete")[0], 0)
         else:
@@ -1088,7 +1116,7 @@ class PostProcessor:
                 pass
             elif kpi == "DeltaNetPresentValue" and self.flags_kpis.get("plot_net_present_value") == True:
                 pass
-            elif kpi == "DeltaNetPresentValueLow" and self.flags_kpis.get("plot_net_present_value") == True:
+            elif kpi == "DeltaNetPresentValueHigh" and self.flags_kpis.get("plot_net_present_value") == True:
                 pass
             elif kpi == "DeltaNetPresentValueHigh&high_Elect_price" and self.flags_kpis.get("plot_net_present_value") == True:
                 pass
@@ -1116,22 +1144,45 @@ class PostProcessor:
                             continue
                         elif breaker == True and Z==1:
                             continue
+
                         fig, ax = plt.subplots()
+                        labelsize=11
+
+
+                        mpl.rcParams.update({'font.size': labelsize})
                         from matplotlib import colors
                         if kpi == "OwnConsumption" or kpi== "Autarky":
                             divnorm = colors.TwoSlopeNorm(vmin=0, vcenter=0.5, vmax=1)
                         else:
-                            divnorm = colors.TwoSlopeNorm(vmin=-10000, vcenter=0, vmax=10000)
+                            divnorm = colors.TwoSlopeNorm( vmin=-5000000, vcenter=0, vmax=6000000)
                         cmap = ListedColormap(["darkred", "firebrick", "indianred", "lightcoral","coral", "lightsalmon","lightgreen","greenyellow","yellowgreen","limegreen","forestgreen","darkgreen"])
                         if component == "plot_net_present_value":
 
+
+                            import matplotlib.colors as mcolors
+
+                            data = np.random.rand(10, 10) * 2 - 1
+
+                            # sample the colormaps that you want to use. Use 128 from each so we get 256
+                            # colors in total
+                            colors2 = plt.cm.Greens(np.linspace(0.3, 1, 128))
+                            colors1 = plt.cm.OrRd_r(np.linspace(0, 0.6, 128))
+
+                            # combine them and build a new colormap
+                            colors = np.vstack((colors1, colors2))
+                            mymap = mcolors.LinearSegmentedColormap.from_list('my_colormap', colors)
+                            cmap = cm.get_cmap(mymap, 11)
+
                             cax=ax.pcolormesh(Z,cmap=cmap,norm=divnorm ) # vmax=1 for own consumption good
+
+
                         else:
+                            continue
                             cax=ax.pcolormesh(Z,cmap=cmap,norm=divnorm)   #vmax=1 for own consumption good
-                        cbar = fig.colorbar(cax)
+                        cbar = fig.colorbar(cax,orientation="horizontal")
                         cbar.ax.set_ylabel(kpi)
                         #Always set up to 8 ticks
-                        number_of_ticks=8
+                        number_of_ticks=4
                         ticker=np.round(len(x)/number_of_ticks)
 
                         tick_range_x=(max(x)-min(x))/number_of_ticks
@@ -1143,20 +1194,28 @@ class PostProcessor:
 
 
 
-                        ax.set_xticks(range(len(x)))
-                        ax.set_yticks(range(len(y)))
+                        ax.set_xticks(range(len(x)+1))
+                        ax.set_yticks(range(len(y)+1))
                         #cax.set_bad(color='grey')
+                        x=np.append(x,x[len(x) - 1]+x[1]-x[0])
+                        y=np.append(y,y[len(y) - 1]+y[1]-y[0])
                         list_xticklabels = list(np.round(x, 1))
                         list_yticklabels = list(np.round(y, 1))
                         counter=0
+                        listx=[]
                         while counter<len(list_xticklabels):
                             if counter%ticker!=0:
                                 list_xticklabels[counter]=None
                                 list_yticklabels[counter] = None
+                            else:
+                                listx=np.append(listx,int(counter))
                             counter=counter+1
+
                         ax.set_xticklabels(list_xticklabels)
                         ax.set_yticklabels(list_yticklabels)
-                        ax.set_title("" + house + " with " + strategy + "")
+                        ax.set_xticks(listx)
+                        ax.set_yticks(listx)
+                        ax.set_title("industry")
                         #ax.set_xticklabels(xticklabels)
 
 
@@ -1167,17 +1226,23 @@ class PostProcessor:
                             plt.xlabel('PV-Power kWp/Demand MWh')
                             plt.ylabel('H2 Storage in litres / BatteryCapacity kWh')
                         elif component == "plot_net_present_value":
-                            plt.xlabel('PV-Power kWp/MWh')
-                            plt.ylabel('Battery-Capacity kWh/MWh')
+                            #plt.xlabel('PV-Power kWp/MWh')
+                            plt.ylabel('1e6=1Million€')
                         else:
-                            plt.xlabel('PV-Power kWp/MWh')
+                            #plt.xlabel('PV-Power kWp/MWh')
                             plt.ylabel('Battery-Capacity kWh/MWh')
 
                     #hier ne ebsser Abrufung bauen!!!!
-                        plt.tight_layout()
-                        plt.savefig(""+component+"_" + house + " _with_" + strategy + ".png")
-                        plt.show()
+                        labelsize=11
 
+                        mpl.rcParams.update({'font.size': labelsize})
+
+
+                        plt.tight_layout()
+                        fig.set_size_inches(3.5, 3.5)
+                        plt.tight_layout()
+                        plt.savefig(""+str(kpi)+"" + component + "_" + house + " _with_" + strategy + ".png")
+                        #plt.show()
 
 
                     '''
@@ -1200,8 +1265,6 @@ class PostProcessor:
 
 
 
-    def clean_and_sort_out(self,target_matrix,key_performance_indicators):
-        pass
 
 
     def run(self):
@@ -1252,17 +1315,17 @@ class PostProcessor:
 
 
         new_list = self.get_all_relevant_folders()
-        target_matrix=self.get_json_data(new_list,target_matrix)
+        #target_matrix=self.get_json_data(new_list,target_matrix)
 
-        key_performance_indicators=self.get_pickle_informations(new_list,key_performance_indicators,target_matrix)
+        #key_performance_indicators=self.get_pickle_informations(new_list,key_performance_indicators,target_matrix)
 
         #sort out for salib and clean if same Simulations
         #check if all simulation results are avaiable
 
 
 
-        target_matrix=np.load("target_matrix_sorted_industry_forplot10.npy",allow_pickle=True )
-        key_performance_indicators=np.load("kpis_sorted_industry_forplot10.npy",allow_pickle=True )
+        target_matrix=np.load("target_matrix_sorted_industry_OC.npy",allow_pickle=True )
+        key_performance_indicators=np.load("kpis_sorted_industry_OC.npy",allow_pickle=True )
         self.plot_heat_map(target_matrix,key_performance_indicators)
 
 
@@ -1271,7 +1334,7 @@ my_Post_Processor=PostProcessor(folder_name="basic_household_implicit_salib_hous
                                 pickle_file_name="data",
                                 start_date="20220123_133200",
                                 end_date="20220123_231200",
-                                heat_map_precision_factor=26,
+                                heat_map_precision_factor=23,
                                 simulation_number_to_be_analyzed=50000# can bes as well None, than it checks for all simulations in between start and end date
                                 )
 my_Post_Processor.run()
