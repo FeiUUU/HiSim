@@ -10,6 +10,7 @@ from string import digits
 import re
 #plot stuff
 import matplotlib.pyplot as plt
+from matplotlib import rc
 import matplotlib as mpl
 import matplotlib.pyplot as plt
 from matplotlib import cm
@@ -19,6 +20,7 @@ from matplotlib.ticker import MaxNLocator
 from matplotlib.pyplot import figure
 import numpy_financial as npf
 import postprocessing.postprocessing as pp
+
 
 class  ElectricityPricesConfig:
     def __init__(self):
@@ -45,6 +47,7 @@ class  ElectricityPricesConfig:
         #high bnNETZE GmbH Baden Würtenberg
 
         if utilisation_hours>=2500:
+            
             if provider_price== "average":
                 leistungspreis= 44.4 #Eurp/kW
                 arbeitspreis= 0.0154 #Eurp/kWh
@@ -111,9 +114,9 @@ class PostProcessor:
                  heat_map_precision_factor: int,
                  observation_period=15,
                  plot_heat_map=True,
-                 plot_all_houses=False,
+                 plot_all_houses=True,
                  plot_sfh=True,
-                 plot_mfh=False,
+                 plot_mfh=True,
                  plot_strategy_all=False,
                  plot_strategy_own_consumption=True,
                  plot_strategy_seasonal_storage=False,
@@ -121,6 +124,7 @@ class PostProcessor:
                  plot_own_consumption=False,
                  plot_autarky=False,
                  plot_net_present_value=True,
+                 plot_return_on_investment=True,
                  plot_LCOE=True,
                  plot_payback_periode=True,
                  plot_battery_and_pv=True,
@@ -131,8 +135,8 @@ class PostProcessor:
                  interest_rate=0.0542,
                  analyze_salib=True,
                  analyze_lhs=True,
-                 analyze_industry=True,
-                 analyze_household=False,
+                 analyze_industry=False,
+                 analyze_household=True,
                  provider_price="average",
                  price_for_atypical_usage=False,
                  simulation_number_to_be_analyzed=None,
@@ -196,10 +200,12 @@ class PostProcessor:
                                "plot_h2_storage_relative_battery": plot_h2_storage_relative_battery,
                                "plot_peak_shaving_demand_accurancy": plot_peak_shaving_demand_accurancy,
                                "plot_peak_shaving_generation_accurancy": plot_peak_shaving_generation_accurancy,
-                               "plot_net_present_value" : plot_net_present_value}
+                               "plot_net_present_value" : plot_net_present_value,
+                               "plot_return_on_investment": plot_return_on_investment}
         self.flags_kpis={"plot_own_consumption":plot_own_consumption,
                          "plot_autarky":plot_autarky,
-                         "plot_net_present_value": plot_net_present_value}
+                         "plot_net_present_value": plot_net_present_value,
+                         "plot_return_on_investment":plot_return_on_investment}
     def get_json_data(self,new_list,target_matrix):
 
         for a in  range(len(new_list)):
@@ -625,7 +631,7 @@ class PostProcessor:
                         delta_net_present_value= +net_present_value_with_battery - net_present_value_without_battery
                         delta_net_present_value_low= +net_present_value_with_battery_low - net_present_value_without_battery
 
-                        return_of_investment= (delta_net_present_value - cost_total_investment)/cost_total_investment
+                        return_on_investment= (delta_net_present_value - cost_total_investment)/cost_total_investment
                         return_of_investment_low= (delta_net_present_value_low - cost_total_investment_low)/cost_total_investment_low
 
 
@@ -648,7 +654,7 @@ class PostProcessor:
                         delta_net_present_value_low= +net_present_value_with_battery_low - net_present_value_without_battery_low
                         delta_net_present_value_high= +net_present_value_with_battery_high - net_present_value_without_battery_high
 
-                        return_of_investment= (delta_net_present_value - cost_total_investment)/cost_total_investment
+                        return_on_investment= (delta_net_present_value - cost_total_investment)/cost_total_investment
                         return_of_investment_low= (delta_net_present_value_low - cost_total_investment)/cost_total_investment
                         return_of_investment_high = (delta_net_present_value_high - cost_total_investment) / cost_total_investment
 
@@ -680,7 +686,7 @@ class PostProcessor:
                     newrow.append(delta_net_present_value)
                     newrow.append(delta_net_present_value_low)
                     newrow.append(delta_net_present_value_high)
-                    newrow.append(return_of_investment) #autarky
+                    newrow.append(return_on_investment) #autarky
                     newrow.append(return_of_investment_low)
                     newrow.append(return_of_investment_high)
                     newrow.append(pay_back_duration)
@@ -719,7 +725,9 @@ class PostProcessor:
                 elif component in "plot_net_present_value":
                     x_axis.append((target_matrix[x, 5] / 1000) / (float(key_performance_indicators[x,16])/1000))  # in kW/kW
                     y_axis.append(target_matrix[x, 6] / (float(key_performance_indicators[x,16])/1000))  # in kWh/kw
-
+                elif component in "plot_return_on_investment":
+                    x_axis.append((target_matrix[x, 5] / 1000) / (float(key_performance_indicators[x,16])/1000))  # in kW/kW
+                    y_axis.append(target_matrix[x, 6] / (float(key_performance_indicators[x,16])/1000))  # in kWh/kw
                 elif component in "plot_h2_storage_relative_demand":
                     if target_matrix[x, 13] == None or target_matrix[x, 13] == 0:
                         breaker = True
@@ -749,7 +757,9 @@ class PostProcessor:
                 elif component in "plot_net_present_value":
                     x_axis.append((target_matrix[x, 5] / 1000) / target_matrix[x, 4])  # in kW/kW
                     y_axis.append(target_matrix[x, 6] / (target_matrix[x, 4]))  # in kWh/kw
-
+                elif component in "plot_return_on_investment":
+                    x_axis.append((target_matrix[x, 5] / 1000) / target_matrix[x, 4])  # in kW/kW
+                    y_axis.append(target_matrix[x, 6] / (target_matrix[x, 4]))  # in kWh/kw
                 elif component in "plot_h2_storage_relative_demand":
                     if target_matrix[x, 13] == None or target_matrix[x, 13] == 0:
                         breaker = True
@@ -784,6 +794,10 @@ class PostProcessor:
             key_to_look_at = key_performance_indicators[1::, 4]
         elif kpi == "DeltaNetPresentValueHigh":
             key_to_look_at = key_performance_indicators[1::, 5]
+        elif kpi == "ReturnOnInvestment":
+            key_to_look_at = key_performance_indicators[1::, 6].astype(np.float)*100/15
+        elif kpi == "ReturnOnInvestmentHigh":
+            key_to_look_at = key_performance_indicators[1::, 8].astype(np.float)*100/15
 
         # Set up Matrix and fill with values-Has to be done bec. of Latin Hypercube design
         plot_boundaries = [[((min(x_axis))), (max(x_axis))],
@@ -940,18 +954,19 @@ class PostProcessor:
                     continue
 
         elif self.analyze_industry==True:
-
-            B =(target_matrix[np.any(target_matrix == "Weather", axis=1)])
-            A = (target_matrix[np.any(target_matrix == "peak_shaving_from_grid", axis=1)])
-            target_matrix_new=np.append(B,A,axis=0)
+            B = (target_matrix[np.any(target_matrix == "Weather", axis=1)])
+            A = (target_matrix[np.any(target_matrix == "optimize_own_consumption", axis=1)])
+            target_matrix_new = np.append(B, A, axis=0)
 
             C = key_performance_indicators.copy()
-            i=0
-            while i < (len(target_matrix[:,14])-1):
-                i=i+1
-                if target_matrix[i,14] != "peak_shaving_from_grid":
-                    C[i,0] = "delete"
+            i = 0
+            while i < (len(target_matrix[:, 14]) - 1):
+                i = i + 1
+                if target_matrix[i, 14] != "optimize_own_consumption":
+                    C[i, 0] = "delete"
             key_performance_indicators_new = np.delete(C, np.where(C == "delete")[0], 0)
+
+           # key_performance_indicators_new = np.delete(C, np.where(C == "delete")[0], 0)
             if y == "plot_strategy_Metalworking_and_self_consumption":
                 x = 0
                 target_matrix_new = target_matrix[0, :]
@@ -1120,8 +1135,11 @@ class PostProcessor:
                 pass
             elif kpi == "DeltaNetPresentValueHigh&high_Elect_price" and self.flags_kpis.get("plot_net_present_value") == True:
                 pass
+            elif kpi == "ReturnOnInvestment" and self.flags_kpis.get("plot_return_on_investment") == True:
+                pass
+            elif kpi == "ReturnOnInvestmentHigh" and self.flags_kpis.get("plot_return_on_investment") == True:
+                pass
             else:
-
                 continue
             for house in self.flags_houses:
                 if self.flags_houses[house]==False:
@@ -1145,19 +1163,21 @@ class PostProcessor:
                         elif breaker == True and Z==1:
                             continue
 
-                        fig, ax = plt.subplots()
-                        labelsize=11
 
+                        labelsize=11
+                        #plt.rcParams['font.family'] = 'Arial'
+                        rc('font', **{'family': 'serif', 'serif': ['Arial']})
 
                         mpl.rcParams.update({'font.size': labelsize})
                         from matplotlib import colors
-                        if kpi == "OwnConsumption" or kpi== "Autarky":
+                        if component == "plot_autarky" or component == "plot_own_consumption":
+                            fig, ax = plt.subplots()
                             divnorm = colors.TwoSlopeNorm(vmin=0, vcenter=0.5, vmax=1)
-                        else:
-                            divnorm = colors.TwoSlopeNorm( vmin=-5000000, vcenter=0, vmax=6000000)
-                        cmap = ListedColormap(["darkred", "firebrick", "indianred", "lightcoral","coral", "lightsalmon","lightgreen","greenyellow","yellowgreen","limegreen","forestgreen","darkgreen"])
-                        if component == "plot_net_present_value":
-
+                            cax = ax.pcolormesh(Z, cmap=cmap, norm=divnorm)  # vmax=1 for own consumption good
+                            cmap = ListedColormap(["darkred", "firebrick", "indianred", "lightcoral","coral", "lightsalmon","lightgreen","greenyellow","yellowgreen","limegreen","forestgreen","darkgreen"])
+                        elif component == "plot_net_present_value" and (kpi== "DeltaNetPresentValue" or kpi== "DeltaNetPresentValueHigh") :
+                            fig, ax = plt.subplots()
+                            divnorm = colors.TwoSlopeNorm(vmin=-20000, vcenter=0, vmax=40000)
 
                             import matplotlib.colors as mcolors
 
@@ -1175,13 +1195,37 @@ class PostProcessor:
 
                             cax=ax.pcolormesh(Z,cmap=cmap,norm=divnorm ) # vmax=1 for own consumption good
 
+                        elif component == "plot_return_on_investment" and (kpi== "ReturnOnInvestment" or kpi== "ReturnOnInvestmentHigh"):
+                            fig, ax = plt.subplots()
+                            divnorm = colors.TwoSlopeNorm(vmin=-5, vcenter=0, vmax=20)
 
+                            import matplotlib.colors as mcolors
+
+                            data = np.random.rand(10, 10) * 2 - 1
+
+                            # sample the colormaps that you want to use. Use 128 from each so we get 256
+                            # colors in total
+
+                            colors2 = plt.cm.Greens(np.linspace(0.3, 1, 256))
+                            colors1 = plt.cm.OrRd_r(np.linspace(0, 0.6, 256))
+
+                            # combine them and build a new colormap
+                            colors = np.vstack((colors1, colors2))
+                            mymap = mcolors.LinearSegmentedColormap.from_list('my_colormap', colors)
+                            cmap = cm.get_cmap(mymap, 11)
+
+
+                            #bounds = np.linspace(vmin, vmax, 11)
+                            #norm = mcolors.BoundaryNorm(boundaries=bounds, ncolors=256, extend='both')
+
+                            cax=ax.pcolormesh(Z,cmap=cmap,norm=divnorm) # vmax=1 for own consumption good
                         else:
+
                             continue
-                            cax=ax.pcolormesh(Z,cmap=cmap,norm=divnorm)   #vmax=1 for own consumption good
-                        cbar = fig.colorbar(cax,orientation="horizontal")
+                        cbar = fig.colorbar(cax,extend='both') #,orientation="horizontal"
                         cbar.ax.set_ylabel(kpi)
                         #Always set up to 8 ticks
+
                         number_of_ticks=4
                         ticker=np.round(len(x)/number_of_ticks)
 
@@ -1215,7 +1259,7 @@ class PostProcessor:
                         ax.set_yticklabels(list_yticklabels)
                         ax.set_xticks(listx)
                         ax.set_yticks(listx)
-                        ax.set_title("industry")
+                        ax.set_title(""+str(kpi)+"" + component + "_" + house + " _with_" + strategy + "")
                         #ax.set_xticklabels(xticklabels)
 
 
@@ -1226,23 +1270,25 @@ class PostProcessor:
                             plt.xlabel('PV-Power kWp/Demand MWh')
                             plt.ylabel('H2 Storage in litres / BatteryCapacity kWh')
                         elif component == "plot_net_present_value":
-                            #plt.xlabel('PV-Power kWp/MWh')
+                            plt.xlabel('PV-Power kWp/MWh')
                             plt.ylabel('1e6=1Million€')
+                            pass
                         else:
-                            #plt.xlabel('PV-Power kWp/MWh')
+                            plt.xlabel('PV-Power kWp/MWh')
                             plt.ylabel('Battery-Capacity kWh/MWh')
+                            pass
 
                     #hier ne ebsser Abrufung bauen!!!!
                         labelsize=11
 
                         mpl.rcParams.update({'font.size': labelsize})
+                        # rc('font',**{'family':'sans-serif','sans-serif':['Helvetica']})
 
-
+                        #fig.set_size_inches(2.1, 1.92) #PERFECT SIZE when axis are empty
+                        fig.set_size_inches(3.8, 3.4) # good for coloarbar
                         plt.tight_layout()
-                        fig.set_size_inches(3.5, 3.5)
-                        plt.tight_layout()
-                        plt.savefig(""+str(kpi)+"" + component + "_" + house + " _with_" + strategy + ".png")
-                        #plt.show()
+                        plt.savefig("industry_30"+str(kpi)+"" + component + "_" + house + " _with_" + strategy + ".png")
+                        plt.show()
 
 
                     '''
@@ -1297,7 +1343,7 @@ class PostProcessor:
                                              "DeltaNetPresentValueLow",
                                              "DeltaNetPresentValueHigh",
                                              "ReturnOnInvestment",
-                                             "ReturnOnInvestmentLow",
+                                             "ReturnOfInvestmentLow",
                                              "ReturnOnInvestmentHigh",
                                              "PayBackDuration",
                                              "PayBackDurationLow",
@@ -1324,8 +1370,8 @@ class PostProcessor:
 
 
 
-        target_matrix=np.load("target_matrix_sorted_industry_OC.npy",allow_pickle=True )
-        key_performance_indicators=np.load("kpis_sorted_industry_OC.npy",allow_pickle=True )
+        target_matrix=np.load("target_matrix_sorted_householdsOC.npy",allow_pickle=True )
+        key_performance_indicators=np.load("kpis_sorted_householdsOC.npy",allow_pickle=True )
         self.plot_heat_map(target_matrix,key_performance_indicators)
 
 
@@ -1334,7 +1380,7 @@ my_Post_Processor=PostProcessor(folder_name="basic_household_implicit_salib_hous
                                 pickle_file_name="data",
                                 start_date="20220123_133200",
                                 end_date="20220123_231200",
-                                heat_map_precision_factor=23,
+                                heat_map_precision_factor=40,
                                 simulation_number_to_be_analyzed=50000# can bes as well None, than it checks for all simulations in between start and end date
                                 )
 my_Post_Processor.run()
