@@ -115,10 +115,10 @@ class PostProcessor:
                  observation_period=15,
                  plot_heat_map=True,
                  plot_all_houses=True,
-                 plot_sfh=True,
-                 plot_mfh=True,
+                 plot_sfh=False,
+                 plot_mfh=False,
                  plot_strategy_all=False,
-                 plot_strategy_own_consumption=True,
+                 plot_strategy_own_consumption=False,
                  plot_strategy_seasonal_storage=False,
                  plot_strategy_peak_shave_into_grid =False,
                  plot_own_consumption=False,
@@ -127,7 +127,7 @@ class PostProcessor:
                  plot_return_on_investment=True,
                  plot_LCOE=True,
                  plot_payback_periode=True,
-                 plot_battery_and_pv=True,
+                 plot_battery_and_pv=False,
                  plot_h2_storage_relative_demand=False,
                  plot_h2_storage_relative_battery=False,
                  plot_peak_shaving_demand_accurancy=False,
@@ -135,15 +135,15 @@ class PostProcessor:
                  interest_rate=0.0542,
                  analyze_salib=True,
                  analyze_lhs=True,
-                 analyze_industry=False,
-                 analyze_household=True,
+                 analyze_industry=True,
+                 analyze_household=False,
                  provider_price="average",
                  price_for_atypical_usage=False,
                  simulation_number_to_be_analyzed=None,
-                 plot_strategy_industry=True,
+                 plot_strategy_industry=False,
                  plot_setup_heat_pump=True,
                  plot_setup_chp_gas_heater=True,
-                 plot_peak_shaving_from_grid=False,
+                 plot_peak_shaving_from_grid=True,
                  plot_strategy_over_100MWh_and_peak_shaving_into_grid=False,
                  plot_strategy_over_100MWh_and_self_consumption=False,
                  plot_strategy_Quarry_and_self_consumption=False,
@@ -723,11 +723,12 @@ class PostProcessor:
                     x_axis.append((target_matrix[x, 5] / 1000) / (float(key_performance_indicators[x,16])/1000))  # in kW/kW
                     y_axis.append(target_matrix[x, 6] / (float(key_performance_indicators[x,16])/1000))  # in kWh/kw
                 elif component in "plot_net_present_value":
-                    x_axis.append((target_matrix[x, 5] / 1000) / (float(key_performance_indicators[x,16])/1000))  # in kW/kW
-                    y_axis.append(target_matrix[x, 6] / (float(key_performance_indicators[x,16])/1000))  # in kWh/kw
+                    x_axis.append(100-target_matrix[x, 15]*100   ) # in kW/kW
+                    y_axis.append(target_matrix[x, 6]/(float(key_performance_indicators[x,16])/1000) )  # in kWh/kw
+
                 elif component in "plot_return_on_investment":
-                    x_axis.append((target_matrix[x, 5] / 1000) / (float(key_performance_indicators[x,16])/1000))  # in kW/kW
-                    y_axis.append(target_matrix[x, 6] / (float(key_performance_indicators[x,16])/1000))  # in kWh/kw
+                    x_axis.append(100-target_matrix[x, 15]*100   ) # in kW/kW
+                    y_axis.append(target_matrix[x, 6]/(float(key_performance_indicators[x,16])/1000) )  # in kWh/kw
                 elif component in "plot_h2_storage_relative_demand":
                     if target_matrix[x, 13] == None or target_matrix[x, 13] == 0:
                         breaker = True
@@ -795,9 +796,11 @@ class PostProcessor:
         elif kpi == "DeltaNetPresentValueHigh":
             key_to_look_at = key_performance_indicators[1::, 5]
         elif kpi == "ReturnOnInvestment":
-            key_to_look_at = key_performance_indicators[1::, 6].astype(np.float)*100/15
+            key_to_look_at = key_performance_indicators[1::, 6]
+        elif kpi == "ReturnOnInvestmentLow":
+            key_to_look_at = key_performance_indicators[1::, 7]
         elif kpi == "ReturnOnInvestmentHigh":
-            key_to_look_at = key_performance_indicators[1::, 8].astype(np.float)*100/15
+            key_to_look_at = key_performance_indicators[1::, 8]
 
         # Set up Matrix and fill with values-Has to be done bec. of Latin Hypercube design
         plot_boundaries = [[((min(x_axis))), (max(x_axis))],
@@ -874,97 +877,73 @@ class PostProcessor:
                 if target_matrix[i,14] != "optimize_own_consumption":
                     C[i,0] = "delete"
             key_performance_indicators_new = np.delete(C, np.where(C == "delete")[0], 0)
-        elif y == "plot_peak_shaving_from_grid":
-            B =(target_matrix[np.any(target_matrix == "Weather", axis=1)])
-            A = (target_matrix[np.any(target_matrix == "peak_shaving_from_grid", axis=1)])
-            target_matrix_new=np.append(B,A,axis=0)
 
-            C = key_performance_indicators.copy()
-            i=0
-            while i < (len(target_matrix[:,14])-1):
-                i=i+1
-                if target_matrix[i,14] != "peak_shaving_from_grid":
-                    C[i,0] = "delete"
-            key_performance_indicators_new = np.delete(C, np.where(C == "delete")[0], 0)
+        if self.analyze_household== True:
+            if y=="plot_strategy_seasonal_storage":
 
+                B =(target_matrix[np.any(target_matrix == "Weather", axis=1)])
+                A = (target_matrix[np.any(target_matrix == "seasonal_storage", axis=1)])
+                target_matrix_new=np.append(B,A,axis=0)
+                key_performance_indicators_new=key_performance_indicators.copy()
+                i=0
+                while i < (len(target_matrix[:,14])-1):
+                    i=i+1
+                    if target_matrix[i,14] != "seasonal_storage":
+                        key_performance_indicators_new[i,0] = "delete"
 
+                key_performance_indicators_new = np.delete(key_performance_indicators_new, np.where(key_performance_indicators_new == "delete")[0], 0)
 
+            elif y == "plot_strategy_school_and_self_consumption":
+                x = 0
+                target_matrix_new = target_matrix[0, :]
+                key_performance_indicators_new = key_performance_indicators[0, :]
+                while x < target_matrix.shape[0] - 1:
+                    x = x + 1
 
-        elif y=="plot_strategy_seasonal_storage":
+                    if x == 1:
+                        target_matrix_new = np.row_stack((target_matrix_new, target_matrix[x, :]))
+                        key_performance_indicators_new = np.row_stack((key_performance_indicators_new, key_performance_indicators[x, :]))
+                        continue
+                    if target_matrix[x, 1] == "School" and target_matrix[x,14] != "optimize_own_consumption" and ((key_performance_indicators[x,2:6].astype(float)>-20000).any() == True):
+                        target_matrix_new = np.row_stack((target_matrix_new, target_matrix[x, :]))
+                        key_performance_indicators_new = np.row_stack((key_performance_indicators_new, key_performance_indicators[x, :]))
+                        continue
 
-            B =(target_matrix[np.any(target_matrix == "Weather", axis=1)])
-            A = (target_matrix[np.any(target_matrix == "seasonal_storage", axis=1)])
-            target_matrix_new=np.append(B,A,axis=0)
-            key_performance_indicators_new=key_performance_indicators.copy()
-            i=0
-            while i < (len(target_matrix[:,14])-1):
-                i=i+1
-                if target_matrix[i,14] != "seasonal_storage":
-                    key_performance_indicators_new[i,0] = "delete"
+            elif y == "plot_setup_heat_pump":
+                x = 0
+                target_matrix_new = target_matrix[0, :]
+                key_performance_indicators_new = key_performance_indicators[0, :]
+                while x < target_matrix.shape[0] - 1:
+                    x = x + 1
 
-            key_performance_indicators_new = np.delete(key_performance_indicators_new, np.where(key_performance_indicators_new == "delete")[0], 0)
+                    if x == 1:
+                        target_matrix_new = np.row_stack((target_matrix_new, target_matrix[x, :]))
+                        key_performance_indicators_new = np.row_stack((key_performance_indicators_new, key_performance_indicators[x, :]))
+                        continue
+                    if str(target_matrix[x,7]) != "None":
+                        target_matrix_new = np.row_stack((target_matrix_new, target_matrix[x, :]))
+                        key_performance_indicators_new = np.row_stack((key_performance_indicators_new, key_performance_indicators[x, :]))
+                        continue
+            elif y == "plot_setup_chp_gas_heater":
+                x = 0
+                target_matrix_new = target_matrix[0, :]
+                key_performance_indicators_new = key_performance_indicators[0, :]
+                while x < target_matrix.shape[0] - 1:
+                    x = x + 1
 
-        elif y == "plot_strategy_school_and_self_consumption":
-            x = 0
-            target_matrix_new = target_matrix[0, :]
-            key_performance_indicators_new = key_performance_indicators[0, :]
-            while x < target_matrix.shape[0] - 1:
-                x = x + 1
-
-                if x == 1:
-                    target_matrix_new = np.row_stack((target_matrix_new, target_matrix[x, :]))
-                    key_performance_indicators_new = np.row_stack((key_performance_indicators_new, key_performance_indicators[x, :]))
-                    continue
-                if target_matrix[x, 1] == "School" and target_matrix[x,14] != "optimize_own_consumption" and ((key_performance_indicators[x,2:6].astype(float)>-20000).any() == True):
-                    target_matrix_new = np.row_stack((target_matrix_new, target_matrix[x, :]))
-                    key_performance_indicators_new = np.row_stack((key_performance_indicators_new, key_performance_indicators[x, :]))
-                    continue
-
-        elif y == "plot_setup_heat_pump":
-            x = 0
-            target_matrix_new = target_matrix[0, :]
-            key_performance_indicators_new = key_performance_indicators[0, :]
-            while x < target_matrix.shape[0] - 1:
-                x = x + 1
-
-                if x == 1:
-                    target_matrix_new = np.row_stack((target_matrix_new, target_matrix[x, :]))
-                    key_performance_indicators_new = np.row_stack((key_performance_indicators_new, key_performance_indicators[x, :]))
-                    continue
-                if str(target_matrix[x,7]) != "None":
-                    target_matrix_new = np.row_stack((target_matrix_new, target_matrix[x, :]))
-                    key_performance_indicators_new = np.row_stack((key_performance_indicators_new, key_performance_indicators[x, :]))
-                    continue
-        elif y == "plot_setup_chp_gas_heater":
-            x = 0
-            target_matrix_new = target_matrix[0, :]
-            key_performance_indicators_new = key_performance_indicators[0, :]
-            while x < target_matrix.shape[0] - 1:
-                x = x + 1
-
-                if x == 1:
-                    target_matrix_new = np.row_stack((target_matrix_new, target_matrix[x, :]))
-                    key_performance_indicators_new = np.row_stack(
-                        (key_performance_indicators_new, key_performance_indicators[x, :]))
-                    continue
-                if str(target_matrix[x, 9]) != "None":
-                    target_matrix_new = np.row_stack((target_matrix_new, target_matrix[x, :]))
-                    key_performance_indicators_new = np.row_stack(
-                        (key_performance_indicators_new, key_performance_indicators[x, :]))
-                    continue
+                    if x == 1:
+                        target_matrix_new = np.row_stack((target_matrix_new, target_matrix[x, :]))
+                        key_performance_indicators_new = np.row_stack(
+                            (key_performance_indicators_new, key_performance_indicators[x, :]))
+                        continue
+                    if str(target_matrix[x, 9]) != "None":
+                        target_matrix_new = np.row_stack((target_matrix_new, target_matrix[x, :]))
+                        key_performance_indicators_new = np.row_stack(
+                            (key_performance_indicators_new, key_performance_indicators[x, :]))
+                        continue
 
         elif self.analyze_industry==True:
-            B = (target_matrix[np.any(target_matrix == "Weather", axis=1)])
-            A = (target_matrix[np.any(target_matrix == "optimize_own_consumption", axis=1)])
-            target_matrix_new = np.append(B, A, axis=0)
 
-            C = key_performance_indicators.copy()
-            i = 0
-            while i < (len(target_matrix[:, 14]) - 1):
-                i = i + 1
-                if target_matrix[i, 14] != "optimize_own_consumption":
-                    C[i, 0] = "delete"
-            key_performance_indicators_new = np.delete(C, np.where(C == "delete")[0], 0)
 
            # key_performance_indicators_new = np.delete(C, np.where(C == "delete")[0], 0)
             if y == "plot_strategy_Metalworking_and_self_consumption":
@@ -1086,23 +1065,31 @@ class PostProcessor:
                         target_matrix_new = np.row_stack((target_matrix_new, target_matrix[x, :]))
                         key_performance_indicators_new = np.row_stack((key_performance_indicators_new, key_performance_indicators[x, :]))
                         continue
-                    if float(key_performance_indicators[x,7])/1000<100   and target_matrix[x,14] != "peak_shaving_from_grid" and float(target_matrix[x,15]) <0.1 and ((key_performance_indicators[x,2:6].astype(float)>-500000).any() == True):
+                    if target_matrix[x, 1] == "Quarry" and target_matrix[x,14] != "optimize_own_consumption" and ((key_performance_indicators[x,2:6].astype(float)>-20000).any() == True):
                         target_matrix_new = np.row_stack((target_matrix_new, target_matrix[x, :]))
                         key_performance_indicators_new = np.row_stack((key_performance_indicators_new, key_performance_indicators[x, :]))
                         continue
 
+            elif y=="plot_peak_shaving_from_grid":
 
-            elif y=="plot_strategy_peak_shave_from_grid":
+                x = 0
+                target_matrix_new = target_matrix[0, :]
+                key_performance_indicators_new = key_performance_indicators[0, :]
+                while x < target_matrix.shape[0] - 1:
+                    x = x + 1
 
-                B =(target_matrix[np.any(target_matrix == "Weather", axis=1)])
-                A = (target_matrix[np.any(target_matrix == "peak_shaving_from_grid", axis=1)])
-                target_matrix_new=np.append(B,A,axis=0)
-                key_performance_indicators_new=key_performance_indicators.copy()
-                i=0
-                while i < (len(target_matrix[:,14])-1):
-                    i=i+1
-                    if target_matrix[i,14] != "peak_shaving_from_grid":
-                        key_performance_indicators_new[i,0] = "delete"
+                    if x == 1:
+                        target_matrix_new = np.row_stack((target_matrix_new, target_matrix[x, :]))
+                        key_performance_indicators_new = np.row_stack((key_performance_indicators_new, key_performance_indicators[x, :]))
+                        continue
+                    if target_matrix[x,14] == "peak_shaving_from_grid" and target_matrix[x,15]>0.5 and target_matrix[x,6]<20700:
+                        target_matrix_new = np.row_stack((target_matrix_new, target_matrix[x, :]))
+                        key_performance_indicators_new = np.row_stack((key_performance_indicators_new, key_performance_indicators[x, :]))
+                        continue
+
+            else:
+                breaker = True
+                return 0, 0, breaker
 
             key_performance_indicators_new = np.delete(key_performance_indicators_new, np.where(key_performance_indicators_new == "delete")[0], 0)
         else:
@@ -1133,11 +1120,13 @@ class PostProcessor:
                 pass
             elif kpi == "DeltaNetPresentValueHigh" and self.flags_kpis.get("plot_net_present_value") == True:
                 pass
-            elif kpi == "DeltaNetPresentValueHigh&high_Elect_price" and self.flags_kpis.get("plot_net_present_value") == True:
+            elif kpi == "DeltaNetPresentValueLow" and self.flags_kpis.get("plot_net_present_value") == True:
                 pass
             elif kpi == "ReturnOnInvestment" and self.flags_kpis.get("plot_return_on_investment") == True:
                 pass
             elif kpi == "ReturnOnInvestmentHigh" and self.flags_kpis.get("plot_return_on_investment") == True:
+                pass
+            elif kpi == "ReturnOnInvestmentLow" and self.flags_kpis.get("plot_return_on_investment") == True:
                 pass
             else:
                 continue
@@ -1175,9 +1164,9 @@ class PostProcessor:
                             divnorm = colors.TwoSlopeNorm(vmin=0, vcenter=0.5, vmax=1)
                             cax = ax.pcolormesh(Z, cmap=cmap, norm=divnorm)  # vmax=1 for own consumption good
                             cmap = ListedColormap(["darkred", "firebrick", "indianred", "lightcoral","coral", "lightsalmon","lightgreen","greenyellow","yellowgreen","limegreen","forestgreen","darkgreen"])
-                        elif component == "plot_net_present_value" and (kpi== "DeltaNetPresentValue" or kpi== "DeltaNetPresentValueHigh") :
+                        elif component == "plot_net_present_value" and (kpi== "DeltaNetPresentValue" or kpi== "DeltaNetPresentValueHigh"or kpi== "DeltaNetPresentValueLow") :
                             fig, ax = plt.subplots()
-                            divnorm = colors.TwoSlopeNorm(vmin=-20000, vcenter=0, vmax=40000)
+                            divnorm = colors.TwoSlopeNorm(vmin=-500000, vcenter=0, vmax=100000)
 
                             import matplotlib.colors as mcolors
 
@@ -1195,9 +1184,9 @@ class PostProcessor:
 
                             cax=ax.pcolormesh(Z,cmap=cmap,norm=divnorm ) # vmax=1 for own consumption good
 
-                        elif component == "plot_return_on_investment" and (kpi== "ReturnOnInvestment" or kpi== "ReturnOnInvestmentHigh"):
+                        elif component == "plot_return_on_investment" and (kpi== "ReturnOnInvestment" or kpi== "ReturnOnInvestmentHigh" or kpi== "ReturnOnInvestmentLow"):
                             fig, ax = plt.subplots()
-                            divnorm = colors.TwoSlopeNorm(vmin=-5, vcenter=0, vmax=20)
+                            divnorm = colors.TwoSlopeNorm(vmin=-0.5, vcenter=1, vmax=2)
 
                             import matplotlib.colors as mcolors
 
@@ -1222,8 +1211,8 @@ class PostProcessor:
                         else:
 
                             continue
-                        cbar = fig.colorbar(cax,extend='both') #,orientation="horizontal"
-                        cbar.ax.set_ylabel(kpi)
+                        #cbar = fig.colorbar(cax,extend='both') #,orientation="horizontal"
+                        #cbar.ax.set_ylabel(kpi)
                         #Always set up to 8 ticks
 
                         number_of_ticks=4
@@ -1259,7 +1248,7 @@ class PostProcessor:
                         ax.set_yticklabels(list_yticklabels)
                         ax.set_xticks(listx)
                         ax.set_yticks(listx)
-                        ax.set_title(""+str(kpi)+"" + component + "_" + house + " _with_" + strategy + "")
+                        #ax.set_title(""+str(kpi)+"" + component + "_" + house + " _with_" + strategy + "")
                         #ax.set_xticklabels(xticklabels)
 
 
@@ -1270,12 +1259,12 @@ class PostProcessor:
                             plt.xlabel('PV-Power kWp/Demand MWh')
                             plt.ylabel('H2 Storage in litres / BatteryCapacity kWh')
                         elif component == "plot_net_present_value":
-                            plt.xlabel('PV-Power kWp/MWh')
-                            plt.ylabel('1e6=1Million€')
+                            #plt.xlabel('Percentage-Goal of Reducing Peak')
+                            #plt.ylabel('Battery-Capacity kWh/MWh')
                             pass
                         else:
-                            plt.xlabel('PV-Power kWp/MWh')
-                            plt.ylabel('Battery-Capacity kWh/MWh')
+                            #plt.xlabel('PV-Power kWp/MWh')
+                            #plt.ylabel('Battery-Capacity kWh/MWh')
                             pass
 
                     #hier ne ebsser Abrufung bauen!!!!
@@ -1284,8 +1273,8 @@ class PostProcessor:
                         mpl.rcParams.update({'font.size': labelsize})
                         # rc('font',**{'family':'sans-serif','sans-serif':['Helvetica']})
 
-                        #fig.set_size_inches(2.1, 1.92) #PERFECT SIZE when axis are empty
-                        fig.set_size_inches(3.8, 3.4) # good for coloarbar
+                        fig.set_size_inches(2.1, 1.92) #PERFECT SIZE when axis are empty
+                        #fig.set_size_inches(3.8, 3.4) # good for coloarbar
                         plt.tight_layout()
                         plt.savefig("industry_30"+str(kpi)+"" + component + "_" + house + " _with_" + strategy + ".png")
                         plt.show()
@@ -1370,8 +1359,8 @@ class PostProcessor:
 
 
 
-        target_matrix=np.load("target_matrix_sorted_householdsOC.npy",allow_pickle=True )
-        key_performance_indicators=np.load("kpis_sorted_householdsOC.npy",allow_pickle=True )
+        target_matrix=np.load("target_matrix_sorted_industry_allpro.npy",allow_pickle=True )
+        key_performance_indicators=np.load("kpis_sorted_industry_allpro.npy",allow_pickle=True )
         self.plot_heat_map(target_matrix,key_performance_indicators)
 
 
@@ -1380,7 +1369,7 @@ my_Post_Processor=PostProcessor(folder_name="basic_household_implicit_salib_hous
                                 pickle_file_name="data",
                                 start_date="20220123_133200",
                                 end_date="20220123_231200",
-                                heat_map_precision_factor=40,
+                                heat_map_precision_factor=39,
                                 simulation_number_to_be_analyzed=50000# can bes as well None, than it checks for all simulations in between start and end date
                                 )
 my_Post_Processor.run()
