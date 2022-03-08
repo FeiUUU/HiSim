@@ -16,15 +16,15 @@ def test_building():
     seconds_per_timestep = 60
     my_simulation_parameters = SimulationParameters.full_year(year=2021, seconds_per_timestep=seconds_per_timestep)
     stsv : component.SingleTimeStepValues = component.SingleTimeStepValues(13)
-    repo = component.SimRepository()
+   # repo = component.SimRepository()
     # Set Occupancy
     my_occupancy = occupancy.Occupancy(profile=my_occupancy_profile, my_simulation_parameters=my_simulation_parameters)
-    my_occupancy.set_sim_repo( repo )
+   # my_occupancy.set_sim_repo( repo )
 
 
     # Set Weather
     my_weather = weather.Weather(location=weather_location,my_simulation_parameters=my_simulation_parameters)
-    my_weather.set_sim_repo(repo)
+    #my_weather.set_sim_repo(repo)
     # Set Residence
     my_residence = building.Building(building_code=building_code, bClass=bClass, my_simulation_parameters=my_simulation_parameters)
 

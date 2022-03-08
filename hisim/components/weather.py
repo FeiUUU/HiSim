@@ -143,15 +143,15 @@ class Weather(Component):
         stsv.set_output_value(self.azimuthC, self.azimuth[timestep])
         stsv.set_output_value(self.wind_speedC, self.Wspd[timestep])
         stsv.set_output_value(self.apparent_zenithC, self.apparent_zenith[timestep])
-        timesteps_24h = 24*3600 / self.my_simulation_parameters.seconds_per_timestep
-        lasttimestep = int(timestep+ timesteps_24h)
-        if(lasttimestep > len(self.temperature)):
-            lasttimestep = len(self.temperature)
-        #print( type(self.temperature))
-        temperatureforecast = self.temperature[timestep:lasttimestep]
-        self.simulation_repository.set_entry(self.Weather_Temperature_Forecast_24h,temperatureforecast)
-
-
+        
+        if self.my_simulation_parameters.system_config.predictive:
+            timesteps_24h = 24*3600 / self.my_simulation_parameters.seconds_per_timestep
+            lasttimestep = int(timestep+ timesteps_24h)
+            if(lasttimestep > len(self.temperature)):
+                lasttimestep = len(self.temperature)
+            #print( type(self.temperature))
+            temperatureforecast = self.temperature[timestep:lasttimestep]
+            self.simulation_repository.set_entry(self.Weather_Temperature_Forecast_24h,temperatureforecast)
 
     def build(self, location,my_simulation_parameters:SimulationParameters):
         seconds_per_timestep=my_simulation_parameters.seconds_per_timestep
