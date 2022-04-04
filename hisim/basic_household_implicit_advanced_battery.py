@@ -55,9 +55,10 @@ if __name__ == '__main__':
 
             my_cfg.add_component(my_csv_loader)
             # Weather
-            my_cfg.add_component("Weather")
+            my_weather = {"Weather": {"location": "01Bremerhaven"}}
+            my_cfg.add_component(my_weather)
             # PVS
-            my_pvs = {"PVSystem": {"power": pvs_power}}
+            my_pvs = {"PVSystem": {"power": pvs_power, "location": "01Bremerhaven"}}
             my_cfg.add_component(my_pvs)
 
             # Battery
@@ -65,11 +66,7 @@ if __name__ == '__main__':
             my_cfg.add_component(my_battery)
 
             # Controller
-            my_controller = {"Controller": {"temperature_storage_target_warm_water": 50,
-                                              "temperature_storage_target_heating_water": 40,
-                                              "temperature_storage_target_hysteresis": 40,
-                                              "strategy": "optimize_own_consumption",
-                                              "limit_to_shave": 0}}
+            my_controller = {"Controller": {"strategy": "optimize_own_consumption"}}
             my_cfg.add_component(my_controller)
 
             ####################################################################################################################
@@ -103,7 +100,7 @@ if __name__ == '__main__':
 
             # Export configuration file
             my_cfg.dump()
-            os.system("python hisim.py basic_household_implicit basic_household_implicit")
+            os.system("python hisim.py basic_household_implicit_advanced_battery basic_household_implicit")
 
 
 

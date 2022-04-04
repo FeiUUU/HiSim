@@ -105,7 +105,7 @@ class Controller(cp.Component):
                                                                                   self.ElectricityConsumptionBuilding,
                                                                                   lt.LoadTypes.Electricity,
                                                                                   lt.Units.Watt,
-                                                                                  True)
+                                                                                  False)
 
         self.electricity_output_pvs: cp.ComponentInput = self.add_input(self.ComponentName,
                                                                         self.ElectricityOutputPvs,
@@ -400,8 +400,7 @@ class Controller(cp.Component):
         # Production of Electricity positve sign
         # Consumption of Electricity negative sign
         delta_demand = stsv.get_input_value(self.electricity_output_pvs) - stsv.get_input_value(self.electricity_consumption_building) -stsv.get_input_value(self.electricity_demand_heat_pump)
-        if timestep==152:
-            print(stsv.get_input_value(self.electricity_output_pvs))
+
         if self.strategy == "optimize_own_consumption":
             self.optimize_own_consumption(delta_demand=delta_demand,stsv=stsv)
         elif self.strategy == "seasonal_storage":
